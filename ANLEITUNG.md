@@ -9,7 +9,8 @@ Firmware für das **AI-Thinker ESP32-CAM** Modul (OV2640). Sie bringt einen Webs
 | **Access Point** | Eigenes WLAN `CamOS-XXXXXX`, Passwort `camos1234`, IP `192.168.4.1`, Captive Portal (Seite öffnet sich am Handy automatisch) |
 | **Heim-WLAN** | Optional. AP-Modus „immer an“ oder „nur wenn kein WLAN“. mDNS: `http://camos-xxxxxx.local` |
 | **Live-Stream** | MJPEG auf Port 81 (`http://IP:81/stream`), Einzelbild unter `/capture` |
-| **Kamera** | Auflösung QQVGA–UXGA, Qualität, Helligkeit, Kontrast, Sättigung, Effekte, Spiegeln, Weissabgleich |
+| **Kamera-Sensoren** | **OV2640** (bis UXGA 1600×1200), **OV3660** (bis QXGA 2048×1536, 3 MP) und OV5640 (bis 5 MP) werden automatisch erkannt. Beim Wechsel des Sensors werden passende Standardwerte gesetzt (OV3660: Bild gedreht, Helligkeit +1, Sättigung −2) |
+| **Kamera** | Auflösung QQVGA–UXGA (OV3660: bis QXGA), Qualität, Helligkeit, Kontrast, Sättigung, Effekte, Spiegeln, Weissabgleich |
 | **Bewegungserkennung** | Bildvergleich auf 1/8 Auflösung. Schwelle, Empfindlichkeit, Intervall und Nachlaufzeit lassen sich einstellen. Live-Graph im Browser |
 | **Blitz** | LED an GPIO4 dimmbar (0–255), Puls, Blitz bei Fotos |
 | **Konsole** | Im Browser und über Serial (115200 Baud), mit Befehlsverlauf |
@@ -121,7 +122,7 @@ Befehle funktionieren in der Web-Konsole, über Serial, in Regeln und per HTTP. 
 | `MotionThreshold <1-255>` | Helligkeitsänderung pro Pixel, ab der ein Pixel als „geändert“ gilt |
 | `MotionSensitivity <0.1-100>` | Ab wie viel % geänderter Pixel ausgelöst wird |
 | `MotionInterval <ms>` / `MotionCooldown <s>` / `MotionSave <0\|1>` | Prüfintervall / Nachlaufzeit / Foto auf SD |
-| `FrameSize <VGA\|SVGA\|…>`, `Quality`, `Brightness`, `Contrast`, `Saturation`, `Effect`, `VFlip`, `HMirror`, `AWB` | Kamera |
+| `FrameSize <VGA\|SVGA\|…\|UXGA\|FHD\|QXGA>` (FHD/QXGA nur OV3660/OV5640), `Quality`, `Brightness`, `Contrast`, `Saturation`, `Effect`, `VFlip`, `HMirror`, `AWB` | Kamera |
 | `WifiSSID`, `WifiPass`, `WifiConnect`, `WifiScan` | Heim-WLAN |
 | `APSSID`, `APPass`, `APMode <0\|1>` | Access Point (mit `WifiConnect` anwenden) |
 | `Hostname`, `WebPassword`, `Timezone`, `NtpServer` | Allgemein |

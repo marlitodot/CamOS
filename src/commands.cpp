@@ -69,7 +69,8 @@ static const char HELP[] =
   " Taste  : ButtonPin <-1|0|12|13|14|15> | ButtonPhoto <0|1>  (Events Button#Short / Button#Long)\n"
   " Motion : Motion <0|1> | MotionThreshold <1-255> | MotionSensitivity <0.1-100 %>\n"
   "          MotionInterval <ms> | MotionCooldown <s> | MotionSave <0|1>\n"
-  " Kamera : FrameSize <QQVGA|QVGA|CIF|HVGA|VGA|SVGA|XGA|HD|SXGA|UXGA> | Quality <4-63>\n"
+  " Kamera : FrameSize <QQVGA|QVGA|CIF|HVGA|VGA|SVGA|XGA|HD|SXGA|UXGA|FHD|QXGA|QSXGA> | Quality <4-63>\n"
+  "          (OV2640 max. UXGA, OV3660 max. QXGA, OV5640 max. QSXGA)\n"
   "          Brightness|Contrast|Saturation <-2..2> | Effect <0-6> | VFlip|HMirror|AWB <0|1>\n"
   " WLAN   : WifiSSID <ssid> | WifiPass <pw> | WifiConnect | WifiScan\n"
   "          APSSID <ssid> | APPass <pw> | APMode <0=immer|1=nur ohne WLAN>\n"
@@ -111,6 +112,8 @@ String statusJson() {
   j += "}";
 
   j += ",\"cam\":{\"ok\":"; j += b(cameraOk);
+  j += ",\"sensor\":"; j += jstr(cameraSensorName());
+  j += ",\"maxfs\":\""; j += framesizeName(cameraMaxFramesize()); j += "\"";
   j += ",\"framesize\":\""; j += framesizeName(cfg.framesize);
   j += "\",\"quality\":"; j += String(cfg.quality);
   j += ",\"brightness\":"; j += String(cfg.brightness);
@@ -271,8 +274,8 @@ static String dispatch(const String& base, int idx, const String& full, const St
   if (base == "framesize") {
     if (has) {
       int fs = isDigit(args[0]) ? args.toInt() : framesizeFromName(args);
-      if (fs < 0 || fs > FRAMESIZE_UXGA) return res("FrameSize", "unbekannt");
-      if (!psramFound() && fs > FRAMESIZE_SVGA) fs = FRAMESIZE_SVGA;
+      if (fs < 0 || !strcmp(framesizeName(fs), "?")) return res("FrameSize", "unbekannt");
+      if (fs > cameraMaxFramesize()) fs = cameraMaxFramesize();   // OV2640: UXGA, OV3660: QXGA
       cfg.framesize = fs;
       settingsSave();
       cameraApply();

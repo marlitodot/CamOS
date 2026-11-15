@@ -67,7 +67,8 @@ a.btn{text-decoration:none;display:inline-block}.ex{cursor:pointer}.ex:hover{bac
 <section id="cam"><div class="grid">
 <div class="card"><h3>Bild</h3>
 <div class="row"><label>Auflösung</label><select data-c="FrameSize" data-k="cam.framesize">
-<option value="QQVGA">QQVGA 160x120</option><option value="QVGA">QVGA 320x240</option><option value="CIF">CIF 400x296</option><option value="HVGA">HVGA 480x320</option><option value="VGA">VGA 640x480</option><option value="SVGA">SVGA 800x600</option><option value="XGA">XGA 1024x768</option><option value="HD">HD 1280x720</option><option value="SXGA">SXGA 1280x1024</option><option value="UXGA">UXGA 1600x1200</option></select></div>
+<option value="QQVGA">QQVGA 160x120</option><option value="QVGA">QVGA 320x240</option><option value="CIF">CIF 400x296</option><option value="HVGA">HVGA 480x320</option><option value="VGA">VGA 640x480</option><option value="SVGA">SVGA 800x600</option><option value="XGA">XGA 1024x768</option><option value="HD">HD 1280x720</option><option value="SXGA">SXGA 1280x1024</option><option value="UXGA">UXGA 1600x1200</option><option value="FHD">FHD 1920x1080</option><option value="QXGA">QXGA 2048x1536 (3 MP)</option><option value="QSXGA">QSXGA 2560x1920 (5 MP)</option></select></div>
+<div class="row"><label>Sensor</label><span id="camsensor">-</span></div>
 <div class="row"><label>JPEG Qualität (klein=besser)</label><input type="range" min="4" max="63" data-c="Quality" data-k="cam.quality"><output></output></div>
 <div class="row"><label>Helligkeit</label><input type="range" min="-2" max="2" data-c="Brightness" data-k="cam.brightness"><output></output></div>
 <div class="row"><label>Kontrast</label><input type="range" min="-2" max="2" data-c="Contrast" data-k="cam.contrast"><output></output></div>
@@ -78,7 +79,7 @@ a.btn{text-decoration:none;display:inline-block}.ex{cursor:pointer}.ex:hover{bac
 <div class="row"><label>Horizontal spiegeln</label><input type="checkbox" data-c="HMirror" data-k="cam.hmirror"></div>
 <div class="row"><label>Auto-Weissabgleich</label><input type="checkbox" data-c="AWB" data-k="cam.awb"></div>
 <div class="row"><label>Effekt</label><select data-c="Effect" data-k="cam.effect"><option value="0">Kein</option><option value="1">Negativ</option><option value="2">Graustufen</option><option value="3">Rot</option><option value="4">Grün</option><option value="5">Blau</option><option value="6">Sepia</option></select></div>
-<p class="mut">Ohne PSRAM max. SVGA. Hohe Auflösung = weniger FPS.</p>
+<p class="mut">Unterstützt: OV2640 (max. UXGA), OV3660 (max. QXGA 3 MP), OV5640 (max. QSXGA 5 MP). Wird automatisch erkannt. Ohne PSRAM max. SVGA. Hohe Auflösung = weniger FPS.</p>
 </div></div></section>
 
 <section id="mot"><div class="grid">
@@ -182,7 +183,9 @@ async function status(){let r;try{r=await fetch('/api/status');st=await r.json()
  $('#hflash').className='pill'+(st.flash.level?' on':'');$('#hflash').textContent='Blitz '+st.flash.level;
  $('#htime').textContent=st.time||('Uptime '+fmtUp(st.uptime));
  $('#surl').textContent=streamUrl();
- kv('#kvlive',{'Kamera':st.cam.ok?'OK ('+st.cam.framesize+')':'FEHLER','WLAN':w.connected?w.ssid+' ('+w.rssi+' dBm)':'-','IP':w.connected?w.ip:'-','Access Point':w.ap?w.apssid+' ('+w.clients+' Clients)':'aus','SD-Karte':st.sd.ok?st.sd.total+' MB':'keine (Fotos → PC)','Taste':st.button.pin<0?'aus':'GPIO'+st.button.pin,'Stream-Clients':st.streams,'Uptime':fmtUp(st.uptime),'Freier RAM':Math.round(st.heap/1024)+' KB'});
+ $('#camsensor').textContent=st.cam.ok?st.cam.sensor+' (max. '+st.cam.maxfs+')':'nicht erkannt';
+ {const fs=[...$('[data-c=FrameSize]').options].map(o=>o.value),mx=fs.indexOf(st.cam.maxfs);if(mx>=0)[...$('[data-c=FrameSize]').options].forEach((o,i)=>{o.disabled=i>mx;o.hidden=i>mx})}
+ kv('#kvlive',{'Kamera':st.cam.ok?st.cam.sensor+' ('+st.cam.framesize+')':'FEHLER','WLAN':w.connected?w.ssid+' ('+w.rssi+' dBm)':'-','IP':w.connected?w.ip:'-','Access Point':w.ap?w.apssid+' ('+w.clients+' Clients)':'aus','SD-Karte':st.sd.ok?st.sd.total+' MB':'keine (Fotos → PC)','Taste':st.button.pin<0?'aus':'GPIO'+st.button.pin,'Stream-Clients':st.streams,'Uptime':fmtUp(st.uptime),'Freier RAM':Math.round(st.heap/1024)+' KB'});
  $('#mbar').style.width=Math.min(100,m.level/Math.max(m.sensitivity,0.1)*50)+'%';$('#mbar').style.background=m.active?'var(--bad)':'var(--acc)';
  $('#mlvl').textContent=m.level+'%';$('#mstate').textContent=m.active?'Bewegung erkannt':'ruhig';$('#mcount').textContent=m.count;
  lv.push(m.level);if(lv.length>120)lv.shift();graph();checkPhoto();

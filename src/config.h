@@ -3,7 +3,7 @@
 //  CamOS - Konfiguration / Pins (AI-Thinker ESP32-CAM)
 // ============================================================
 #define FW_NAME    "CamOS"
-#define FW_VERSION "1.1.0"
+#define FW_VERSION "1.2.0"
 
 // Kamera-Pins AI-Thinker
 #define PWDN_GPIO_NUM     32

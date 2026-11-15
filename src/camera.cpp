@@ -1,4 +1,5 @@
 #include "core.h"
+#include <Preferences.h>
 
 bool cameraOk = false;
 static int flashLevel = 0;
@@ -8,8 +9,17 @@ static const FsEntry fsTable[] = {
   {"QQVGA", FRAMESIZE_QQVGA}, {"QVGA", FRAMESIZE_QVGA}, {"CIF", FRAMESIZE_CIF},
   {"HVGA", FRAMESIZE_HVGA},   {"VGA", FRAMESIZE_VGA},   {"SVGA", FRAMESIZE_SVGA},
   {"XGA", FRAMESIZE_XGA},     {"HD", FRAMESIZE_HD},     {"SXGA", FRAMESIZE_SXGA},
-  {"UXGA", FRAMESIZE_UXGA},
+  {"UXGA", FRAMESIZE_UXGA},   {"FHD", FRAMESIZE_FHD},   {"QXGA", FRAMESIZE_QXGA},
+  {"QSXGA", FRAMESIZE_QSXGA},
 };
+
+// Erkannter Sensor (OV2640, OV3660, OV5640 ...)
+static uint16_t sensorPid = 0;
+static String sensorNm = "-";
+static int sensorMax = FRAMESIZE_UXGA;
+
+const char* cameraSensorName() { return sensorNm.c_str(); }
+int cameraMaxFramesize() { return sensorMax; }
 
 const char* framesizeName(int fs) {
   for (auto& e : fsTable) if (e.v == fs) return e.n;
@@ -21,7 +31,7 @@ int framesizeFromName(const String& s) {
   return -1;
 }
 
-bool cameraInit() {
+static esp_err_t cameraStart(framesize_t bufferSize) {
   camera_config_t c = {};
   c.ledc_channel = LEDC_CHANNEL_0;
   c.ledc_timer = LEDC_TIMER_0;
@@ -43,29 +53,86 @@ bool cameraInit() {
   c.pin_reset = RESET_GPIO_NUM;
   c.xclk_freq_hz = 20000000;
   c.pixel_format = PIXFORMAT_JPEG;
+  c.frame_size = bufferSize;   // bestimmt die Puffergroesse = max. moegliche Aufloesung
   if (psramFound()) {
-    c.frame_size = FRAMESIZE_UXGA;   // Puffer fuer max. Aufloesung reservieren
     c.jpeg_quality = 10;
     c.fb_count = 2;
     c.fb_location = CAMERA_FB_IN_PSRAM;
     c.grab_mode = CAMERA_GRAB_LATEST;
   } else {
-    c.frame_size = FRAMESIZE_SVGA;
     c.jpeg_quality = 12;
     c.fb_count = 1;
     c.fb_location = CAMERA_FB_IN_DRAM;
     c.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
-    if (cfg.framesize > FRAMESIZE_SVGA) cfg.framesize = FRAMESIZE_SVGA;
   }
-  esp_err_t err = esp_camera_init(&c);
+  return esp_camera_init(&c);
+}
+
+// Sensor-spezifische Standardwerte, nur wenn ein ANDERER Sensor als beim letzten Start erkannt wird
+static void sensorDefaults() {
+  Preferences p;
+  p.begin("cfg", false);
+  uint16_t last = p.getUShort("sensor", 0);
+  if (last != sensorPid) {
+    if (sensorPid == OV3660_PID) {
+      // OV3660 ist auf den Modulen kopfueber verbaut und etwas dunkler/gesaettigter
+      cfg.vflip = true;
+      cfg.hmirror = false;
+      cfg.brightness = 1;
+      cfg.saturation = -2;
+    } else {
+      cfg.vflip = false;
+      cfg.hmirror = false;
+      cfg.brightness = 0;
+      cfg.saturation = 0;
+    }
+    p.putUShort("sensor", sensorPid);
+    p.end();
+    settingsSave();
+    if (last) logf("Kamera: neuer Sensor erkannt, Standardwerte fuer %s gesetzt", sensorNm.c_str());
+    return;
+  }
+  p.end();
+}
+
+bool cameraInit() {
+  bool psram = psramFound();
+  esp_err_t err = cameraStart(psram ? FRAMESIZE_UXGA : FRAMESIZE_SVGA);
   if (err != ESP_OK) {
     logf("Kamera: Init fehlgeschlagen (0x%x)", err);
     cameraOk = false;
     return false;
   }
-  cameraOk = true;
   sensor_t* s = esp_camera_sensor_get();
-  logf("Kamera: OK, Sensor PID 0x%x, PSRAM %s", s ? s->id.PID : 0, psramFound() ? "ja" : "nein");
+  sensorPid = s ? s->id.PID : 0;
+  camera_sensor_info_t* info = s ? esp_camera_sensor_get_info(&s->id) : nullptr;
+  if (info) {
+    sensorNm = info->name;
+    sensorMax = info->max_size;
+  } else {
+    sensorNm = "PID 0x" + String(sensorPid, HEX);
+    sensorMax = FRAMESIZE_UXGA;
+  }
+
+  if (!psram) {
+    if (sensorMax > FRAMESIZE_SVGA) sensorMax = FRAMESIZE_SVGA;
+  } else if (sensorMax > FRAMESIZE_UXGA) {
+    // OV3660 (QXGA 3 MP) / OV5640 (QSXGA 5 MP): mit groesseren Puffern neu starten
+    esp_camera_deinit();
+    delay(50);
+    err = cameraStart((framesize_t)sensorMax);
+    if (err != ESP_OK) {
+      logf("Kamera: %s volle Aufloesung nicht moeglich (0x%x), nutze UXGA", sensorNm.c_str(), err);
+      esp_camera_deinit();
+      delay(50);
+      sensorMax = FRAMESIZE_UXGA;
+      if (cameraStart(FRAMESIZE_UXGA) != ESP_OK) { cameraOk = false; return false; }
+    }
+  }
+  cameraOk = true;
+  sensorDefaults();
+  if (cfg.framesize > sensorMax) cfg.framesize = sensorMax;
+  logf("Kamera: %s erkannt (max. %s), PSRAM %s", sensorNm.c_str(), framesizeName(sensorMax), psram ? "ja" : "nein");
   cameraApply();
   return true;
 }

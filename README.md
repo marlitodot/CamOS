@@ -6,7 +6,8 @@
 
 ![Platform](https://img.shields.io/badge/platform-ESP32--CAM-blue)
 ![Framework](https://img.shields.io/badge/framework-Arduino%20%7C%20PlatformIO-orange)
-![Version](https://img.shields.io/badge/version-1.1.0-green)
+![Version](https://img.shields.io/badge/version-1.2.0-green)
+![Sensors](https://img.shields.io/badge/sensors-OV2640%20%7C%20OV3660%20%7C%20OV5640-blueviolet)
 ![No Cloud](https://img.shields.io/badge/cloud-not%20required-success)
 
 🇩🇪 **[Deutsche Anleitung → ANLEITUNG.md](ANLEITUNG.md)** · 🤖 **[Plugin guide for AI → PLUGINS_AI.md](PLUGINS_AI.md)**
@@ -21,6 +22,7 @@
 |---|---|
 | 📶 **Own access point** | Works out of the box without a router. Includes a captive portal that opens the UI automatically on phones. |
 | 🏠 **Optional home WiFi** | AP stays on always, or only when WiFi is down. mDNS (`camos-xxxxxx.local`). |
+| 📸 **Multi-sensor** | Detects **OV2640** (2 MP, up to UXGA), **OV3660** (3 MP, up to QXGA 2048×1536) and OV5640 (5 MP) automatically, with matching default image settings for each. |
 | 🎥 **Live stream** | MJPEG on port 81, which works with VLC, Home Assistant and Frigate. Snapshots at `/capture`. |
 | 🏃 **Motion detection** | On-device frame diffing with adjustable threshold, sensitivity, interval and cooldown, plus a live graph. |
 | ⚙️ **Rules engine** | Tasmota-style `ON Motion#Detected DO Flash 255 ENDON`, with variables, timers, schedules and `Backlog`. |
@@ -80,7 +82,7 @@ Every build writes ready-to-flash files to `bin/`:
 
 ## 🔧 Hardware
 
-- **AI-Thinker ESP32-CAM** (OV2640, 4 MB PSRAM)
+- **AI-Thinker ESP32-CAM** (4 MB PSRAM) with an **OV2640** or **OV3660** camera (OV5640 should work too)
 - USB-serial adapter or **ESP32-CAM-MB** board for flashing
 - Stable **5 V / ≥ 500 mA** power supply. Weak power is the #1 cause of reboots and camera errors.
 - Optional: microSD card (FAT32), PIR sensor, push button

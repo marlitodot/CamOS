@@ -50,6 +50,8 @@ void cameraApply();
 camera_fb_t* cameraCapture(bool useFlash);
 const char* framesizeName(int fs);
 int framesizeFromName(const String& s);
+const char* cameraSensorName();   // "OV2640", "OV3660", ...
+int cameraMaxFramesize();         // groesste Aufloesung fuer Sensor + Speicher
 void flashInit();
 void flashSet(int level);
 int  flashGet();
